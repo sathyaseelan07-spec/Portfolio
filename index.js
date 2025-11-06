@@ -1,105 +1,91 @@
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // --- 1. Fixed Navbar and Mobile Menu Toggle ---
-    const hamburger = document.querySelector('.hamburger-menu');
-    const mobileNav = document.querySelector('.mobile-nav-overlay');
-    const closeBtn = document.querySelector('.close-btn');
-    const mobileLinks = document.querySelectorAll('.mobile-nav-link, .mobile-resume-download-btn');
+document.addEventListener('DOMContentLoaded', () => {
+    // --- 1. SET COPYRIGHT YEAR ---
+    document.getElementById('current-year').textContent = new Date().getFullYear();
 
-    const toggleMobileNav = () => {
-        mobileNav.classList.toggle('open');
-        document.body.style.overflow = mobileNav.classList.contains('open') ? 'hidden' : 'auto';
-    };
 
-    hamburger.addEventListener('click', toggleMobileNav);
-    closeBtn.addEventListener('click', toggleMobileNav);
-    
-    mobileLinks.forEach(link => {
+    // --- 2. MOBILE NAVBAR TOGGLE (Hamburger Menu) ---
+    const navMenu = document.getElementById('nav-menu');
+    const menuToggle = document.querySelector('.menu-toggle');
+
+    menuToggle.addEventListener('click', () => {
+        navMenu.classList.toggle('open');
+        const icon = menuToggle.querySelector('i');
+        // Toggle between hamburger and close icon
+        icon.classList.toggle('fa-bars');
+        icon.classList.toggle('fa-times');
+    });
+
+    // Close menu when a link is clicked
+    document.querySelectorAll('#nav-menu a').forEach(link => {
         link.addEventListener('click', () => {
-            if (mobileNav.classList.contains('open')) {
-                toggleMobileNav(); // Close menu after clicking a link
+            if (window.innerWidth <= 768) {
+                navMenu.classList.remove('open');
+                menuToggle.querySelector('i').classList.remove('fa-times');
+                menuToggle.querySelector('i').classList.add('fa-bars');
             }
         });
     });
 
-    // --- 2. Smooth Scrolling for Navbar Links ---
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            document.querySelector(targetId).scrollIntoView({
-                behavior: 'smooth'
-            });
-        });
-    });
 
-    // --- 3. Dynamic Typing Effect (Hacker Feel) ---
-    const dynamicTextElement = document.querySelector('.dynamic-text');
-    const texts = ["Database Test Engineer", "SQL Expert", "QA Specialist", "Data Validation Pro"];
-    let textIndex = 0;
-    let charIndex = 0;
-    let isDeleting = false;
-    let typingSpeed = 150;
+    // --- 3. SCROLL ANIMATIONS (Intersection Observer) ---
+    const elementsToAnimate = document.querySelectorAll('.fade-in, .slide-up');
 
-    function typeWriter() {
-        const currentText = texts[textIndex];
-        
-        if (isDeleting) {
-            charIndex--;
-            typingSpeed = 75; // Faster deletion
-        } else {
-            charIndex++;
-            typingSpeed = 150; // Normal typing
-        }
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1 // Trigger when 10% of the element is visible
+    };
 
-        dynamicTextElement.textContent = currentText.substring(0, charIndex) + " |";
-
-        if (!isDeleting && charIndex === currentText.length) {
-            // Pause at end of line
-            typingSpeed = 2000;
-            isDeleting = true;
-        } else if (isDeleting && charIndex === 0) {
-            isDeleting = false;
-            textIndex = (textIndex + 1) % texts.length;
-            typingSpeed = 500; // Pause before starting new word
-        }
-
-        setTimeout(typeWriter, typingSpeed);
-    }
-    
-    typeWriter(); // Start the effect
-
-    // --- 4. Scroll Reveal Animations (Intersection Observer) ---
-    const observer = new IntersectionObserver(entries => {
+    const observer = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
-                observer.unobserve(entry.target); // Stop observing once visible
+                observer.unobserve(entry.target); // Stop observing after it becomes visible
             }
         });
-    }, { 
-        threshold: 0.1, // Trigger when 10% of the item is visible
-        rootMargin: '0px 0px -50px 0px' // Slightly delayed trigger
+    }, observerOptions);
+
+    elementsToAnimate.forEach(el => {
+        observer.observe(el);
     });
 
-    // Elements to animate:
-    document.querySelectorAll('.objective-container, .skill-group, .project-card').forEach(element => {
-        observer.observe(element);
+
+    // --- 4. TESTIMONIALS CAROUSEL ---
+    const carousel = document.querySelector('.testimonial-carousel');
+    const slides = document.querySelectorAll('.testimonial-slide');
+    const prevBtn = document.querySelector('.prev-btn');
+    const nextBtn = document.querySelector('.next-btn');
+    let currentIndex = 0;
+
+    // Initialize the carousel
+    slides[currentIndex].classList.add('active-slide');
+
+    function updateCarousel() {
+        const slideWidth = slides[0].clientWidth;
+        // Smooth transition via CSS, using transform for performance
+        carousel.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
+        
+        // Update active class for fade effect
+        slides.forEach((slide, index) => {
+            slide.classList.remove('active-slide');
+            if (index === currentIndex) {
+                slide.classList.add('active-slide');
+            }
+        });
+    }
+
+    // Next button functionality
+    nextBtn.addEventListener('click', () => {
+        currentIndex = (currentIndex + 1) % slides.length;
+        updateCarousel();
     });
 
-    // --- 5. Testimonials Carousel Initialization ---
-    $('.testimonial-carousel').slick({
-        dots: true,
-        infinite: true,
-        speed: 500,
-        slidesToShow: 1,
-        adaptiveHeight: true,
-        autoplay: true,
-        autoplaySpeed: 5000,
-        pauseOnHover: true,
-        cssEase: 'ease-in-out'
+    // Previous button functionality
+    prevBtn.addEventListener('click', () => {
+        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+        updateCarousel();
     });
-    
-    // --- 6. Set Current Year for Footer ---
-    document.getElementById('current-year').textContent = new Date().getFullYear();
+
+    // Handle window resize for responsiveness
+    window.addEventListener('resize', updateCarousel);
 });
